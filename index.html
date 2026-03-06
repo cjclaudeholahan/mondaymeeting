@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monday Menlo Meeting — Guest Ideas</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:       #000d1f;
+      --surface:  #001630;
+      --surface2: #002040;
+      --navy:     #003166;
+      --gold:     #c9a84c;
+      --gold2:    #e8c66a;
+      --gold3:    #f5dfa0;
+      --red:      #e05252;
+      --text:     #e8e4dc;
+      --muted:    #7a90ac;
+      --border:   rgba(201,168,76,0.2);
+      --glow:     rgba(201,168,76,0.35);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background ── */
+    .bg-canvas {
+      position: fixed; inset: 0;
+      z-index: 0; overflow: hidden; pointer-events: none;
+    }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(90px); opacity: 0.28;
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 700px; height: 700px; background: radial-gradient(circle, #003b80, transparent 70%); top: -250px; left: -200px; animation-delay: 0s; }
+    .orb2 { width: 500px; height: 500px; background: radial-gradient(circle, #c9a84c, transparent 70%); bottom: -150px; right: -120px; animation-delay: -7s; }
+    .orb3 { width: 420px; height: 420px; background: radial-gradient(circle, #001a4a, transparent 70%); top: 45%; left: 50%; transform: translateX(-50%); animation-delay: -13s; }
+
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(35px,25px) scale(1.07); }
+    }
+
+    /* Grid lines overlay */
+    .grid-overlay {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ── Layout ── */
+    .page {
+      position: relative; z-index: 1;
+      max-width: 920px; margin: 0 auto; padding: 40px 24px 80px;
+    }
+
+    /* ── Header ── */
+    header { text-align: center; padding: 56px 0 44px; }
+
+    .logo-lockup {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; margin-bottom: 28px;
+    }
+    .logo-mark {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 900; color: var(--bg);
+      box-shadow: 0 4px 20px rgba(201,168,76,0.4);
+      letter-spacing: -0.05em;
+    }
+    .logo-text { text-align: left; }
+    .logo-name {
+      font-size: 1rem; font-weight: 800; color: var(--gold2);
+      letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .logo-sub {
+      font-size: 0.7rem; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(201,168,76,0.1);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 100px; padding: 6px 18px;
+      font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--gold2); margin-bottom: 22px;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; background: var(--gold2); border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.4; transform:scale(0.65); }
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+      font-weight: 800; line-height: 1.1; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f0ece4 15%, var(--gold2) 55%, var(--gold3) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 14px;
+    }
+
+    .subtitle {
+      font-size: 1.05rem; color: var(--muted);
+      max-width: 440px; margin: 0 auto; line-height: 1.65;
+    }
+
+    /* ── Stats ── */
+    .stats-bar {
+      display: flex; justify-content: center; gap: 0;
+      margin: 36px auto; max-width: 480px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .stat {
+      flex: 1; text-align: center; padding: 18px 12px;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-size: 1.8rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label {
+      font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted); margin-top: 3px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold2), transparent);
+      opacity: 0.5;
+    }
+
+    /* ── Form ── */
+    .form-card { margin-bottom: 40px; }
+
+    .form-title {
+      font-size: 1.2rem; font-weight: 700; margin-bottom: 5px;
+      display: flex; align-items: center; gap: 10px; color: var(--text);
+    }
+    .form-title .icon { color: var(--gold2); font-size: 1.1rem; }
+    .form-desc { color: var(--muted); font-size: 0.88rem; margin-bottom: 26px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    input, textarea, select {
+      background: var(--surface2); border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 10px; color: var(--text); font-size: 0.93rem;
+      padding: 11px 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none; font-family: inherit; resize: vertical;
+    }
+    input::placeholder, textarea::placeholder { color: rgba(122,144,172,0.5); }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+    select option { background: var(--surface2); }
+    textarea { min-height: 88px; }
+
+    .btn-submit {
+      margin-top: 22px; width: 100%; padding: 13px; border: none;
+      border-radius: 12px; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #a07828, var(--gold), var(--gold2));
+      color: #000d1f; letter-spacing: 0.05em;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+    }
+    .btn-submit:hover {
+      opacity: 0.9; transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(201,168,76,0.5);
+    }
+    .btn-submit:active { transform: translateY(0); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: linear-gradient(135deg, #a07828, var(--gold2));
+      color: #000d1f; padding: 12px 26px; border-radius: 100px;
+      font-weight: 700; font-size: 0.88rem;
+      box-shadow: 0 8px 28px rgba(201,168,76,0.4);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 999; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 22px; gap: 12px; flex-wrap: wrap;
+    }
+    .section-title {
+      font-size: 1.2rem; font-weight: 700;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title span { color: var(--gold2); }
+
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn {
+      background: var(--surface2); border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 100px; color: var(--muted); font-size: 0.78rem;
+      padding: 5px 14px; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: rgba(201,168,76,0.12);
+      border-color: var(--gold); color: var(--gold2);
+    }
+
+    /* ── Idea cards ── */
+    .ideas-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+    .idea-card {
+      background: var(--surface); border: 1px solid rgba(201,168,76,0.12);
+      border-radius: 16px; padding: 20px 22px;
+      display: grid; grid-template-columns: auto 1fr;
+      gap: 16px; align-items: start;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      animation: slideIn 0.4s ease forwards; opacity: 0;
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateY(14px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .idea-card:hover {
+      border-color: rgba(201,168,76,0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+    }
+
+    .idea-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .idea-title { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+    .idea-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .tag {
+      font-size: 0.7rem; padding: 3px 9px; border-radius: 100px;
+      font-weight: 600; letter-spacing: 0.04em;
+    }
+    .idea-pitch { font-size: 0.86rem; color: var(--muted); line-height: 1.55; }
+    .recommender-line {
+      font-size: 0.78rem; margin-top: 8px;
+      color: var(--gold); display: flex; align-items: center; gap: 5px;
+    }
+    .recommender-line svg { flex-shrink: 0; }
+    .idea-link {
+      font-size: 0.76rem; color: var(--gold2); text-decoration: none;
+      word-break: break-all; display: block; margin-top: 5px;
+    }
+    .idea-link:hover { text-decoration: underline; }
+
+    /* ── Vote widget ── */
+    .vote-widget {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0; flex-shrink: 0; min-width: 44px;
+    }
+    .vote-up, .vote-down {
+      width: 36px; height: 32px; display: flex; align-items: center;
+      justify-content: center; border: 1px solid rgba(201,168,76,0.18);
+      background: var(--surface2); cursor: pointer;
+      transition: all 0.18s; font-size: 0.85rem; font-family: inherit;
+      color: var(--muted);
+    }
+    .vote-up  { border-radius: 8px 8px 0 0; border-bottom: none; }
+    .vote-down { border-radius: 0 0 8px 8px; border-top: 1px solid rgba(201,168,76,0.08); }
+
+    .vote-up:hover   { background: rgba(201,168,76,0.15); color: var(--gold2); border-color: var(--gold); }
+    .vote-down:hover { background: rgba(224,82,82,0.12);  color: var(--red);   border-color: var(--red); }
+
+    .vote-up.active   { background: rgba(201,168,76,0.18); color: var(--gold2);  border-color: var(--gold); }
+    .vote-down.active { background: rgba(224,82,82,0.15);  color: var(--red);    border-color: var(--red); }
+
+    .vote-score {
+      width: 36px; text-align: center; font-size: 0.88rem; font-weight: 700;
+      padding: 4px 0; background: var(--surface2);
+      border-left: 1px solid rgba(201,168,76,0.18);
+      border-right: 1px solid rgba(201,168,76,0.18);
+      color: var(--text);
+    }
+    .vote-score.positive { color: var(--gold2); }
+    .vote-score.negative { color: var(--red); }
+
+    .idea-date {
+      font-size: 0.68rem; color: rgba(122,144,172,0.5);
+      text-align: center; margin-top: 6px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 56px 24px; color: var(--muted);
+    }
+    .empty-icon { font-size: 2.8rem; margin-bottom: 12px; }
+    .empty-text { font-size: 0.95rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 580px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 7px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="bg-canvas">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+<div class="grid-overlay"></div>
+
+<div class="page">
+
+  <!-- Header -->
+  <header>
+    <h1>Monday Menlo Meeting</h1>
+    <p class="subtitle">Submit guest proposals for our weekly meeting. Vote to surface the strongest ideas.</p>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Ideas</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-votes">0</div>
+        <div class="stat-label">Net Votes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-cats">0</div>
+        <div class="stat-label">Categories</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Submit Form -->
+  <div class="card form-card">
+    <div class="form-title"><span class="icon">◆</span> Propose a Guest</div>
+    <div class="form-desc">Who would make for a compelling addition to our Monday agenda?</div>
+
+    <form id="ideaForm" autocomplete="off">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Guest Name *</label>
+          <input type="text" id="guestName" placeholder="e.g. Dr. Jane Smith" required />
+        </div>
+        <div class="form-group">
+          <label>Guest Title / Role *</label>
+          <input type="text" id="guestTitle" placeholder="e.g. CEO of Acme, Former Secretary of State" required />
+        </div>
+        <div class="form-group">
+          <label>Recommender Name *</label>
+          <input type="text" id="submitterName" placeholder="e.g. Alex Johnson" required />
+        </div>
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="category" required>
+            <option value="">Select a category…</option>
+            <option>🤖 Artificial Intelligence</option>
+            <option>💻 Technology & Software</option>
+            <option>🔬 Deep Tech & R&D</option>
+            <option>📡 Semiconductors & Hardware</option>
+            <option>🔒 Cybersecurity</option>
+            <option>💰 Private Equity & VC</option>
+            <option>📊 Public Markets & Macro</option>
+            <option>🏦 Alternative Investments</option>
+            <option>🌱 Climate Tech</option>
+            <option>🏗️ Real Estate & Infrastructure</option>
+            <option>🌍 Global Markets & Geopolitics</option>
+            <option>🏛️ Policy & Regulation</option>
+            <option>✏️ Other</option>
+          </select>
+          <input type="text" id="categoryOther" placeholder="Specify category…" style="display:none;margin-top:8px" />
+        </div>
+        <div class="form-group">
+          <label>Link / Profile</label>
+          <input type="url" id="link" placeholder="https://…" />
+        </div>
+        <div class="form-group full">
+          <label>Why should we invite them? *</label>
+          <textarea id="pitch" placeholder="What makes this person worth an hour of our Monday morning? What unique perspective do they bring?" required></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">Submit Idea ◆</button>
+    </form>
+  </div>
+
+  <!-- Ideas List -->
+  <div>
+    <div class="section-header">
+      <div class="section-title"><span>◆</span> Guest Ideas</div>
+      <div class="filter-row" id="filterRow">
+        <button class="filter-btn active" data-filter="all">All</button>
+      </div>
+    </div>
+    <div class="ideas-grid" id="ideasGrid"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────
+  const STORAGE_KEY  = 'menlo_ideas_v4';
+  const VOTES_KEY    = 'menlo_votes_v4';
+  let ideas  = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  // votes[id] = 'up' | 'down'
+  let myVotes = JSON.parse(localStorage.getItem(VOTES_KEY) || '{}');
+  let activeFilter = 'all';
+
+  // ── Category colours ──────────────────────────────────────────────
+  const catColors = {
+    '🤖 Artificial Intelligence':     ['#1a3a7a','#2d5abf'],
+    '💻 Technology & Software':       ['#1a4a8a','#3370cc'],
+    '🔬 Deep Tech & R&D':             ['#0a4a5e','#0d7a99'],
+    '📡 Semiconductors & Hardware':   ['#003a5e','#006699'],
+    '🔒 Cybersecurity':               ['#3a1a6e','#6633aa'],
+    '💰 Private Equity & VC':         ['#8a6200','#c9a84c'],
+    '📊 Public Markets & Macro':      ['#7a4a00','#b88c30'],
+    '🏦 Alternative Investments':     ['#6a3a00','#a86e20'],
+    '🌱 Climate Tech':                ['#1a4a1a','#2e8b2e'],
+    '🏗️ Real Estate & Infrastructure':['#3a2a0a','#7a5a1a'],
+    '🌍 Global Markets & Geopolitics':['#2a1a5e','#5533aa'],
+    '🏛️ Policy & Regulation':         ['#0d3b5e','#1a6699'],
+  };
+
+  function catStyle(cat) {
+    const [a, b] = catColors[cat] || ['#3d3d66','#6666aa'];
+    return `linear-gradient(135deg,${a},${b})`;
+  }
+
+  // ── Other category toggle ─────────────────────────────────────────
+  document.getElementById('category').addEventListener('change', function() {
+    const otherInput = document.getElementById('categoryOther');
+    if (this.value === '✏️ Other') {
+      otherInput.style.display = 'block';
+      otherInput.required = true;
+    } else {
+      otherInput.style.display = 'none';
+      otherInput.required = false;
+      otherInput.value = '';
+    }
+  });
+
+  // ── Helpers ───────────────────────────────────────────────────────
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
+    localStorage.setItem(VOTES_KEY, JSON.stringify(myVotes));
+  }
+
+  function initials(name) {
+    return name.split(/\s+/).map(w => w[0]?.toUpperCase() || '').join('').slice(0,2) || '?';
+  }
+
+  function fmtDate(ts) {
+    return new Date(ts).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function netScore(idea) {
+    return (idea.upvotes||0) - (idea.downvotes||0);
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────────
+  function updateStats() {
+    document.getElementById('stat-total').textContent = ideas.length;
+    const net = ideas.reduce((s,i) => s + netScore(i), 0);
+    document.getElementById('stat-votes').textContent = net >= 0 ? '+'+net : net;
+    document.getElementById('stat-cats').textContent = new Set(ideas.map(i=>i.category)).size;
+  }
+
+  // ── Filters ───────────────────────────────────────────────────────
+  function buildFilters() {
+    const row = document.getElementById('filterRow');
+    row.querySelectorAll('[data-filter]:not([data-filter="all"])').forEach(b=>b.remove());
+    [...new Set(ideas.map(i=>i.category))].forEach(cat => {
+      const b = document.createElement('button');
+      b.className = 'filter-btn'; b.dataset.filter = cat; b.textContent = cat;
+      b.onclick = () => setFilter(cat, b);
+      row.appendChild(b);
+    });
+  }
+
+  function setFilter(val, btn) {
+    activeFilter = val;
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderIdeas();
+  }
+
+  document.querySelector('[data-filter="all"]').onclick = e => setFilter('all', e.currentTarget);
+
+  // ── Render ────────────────────────────────────────────────────────
+  function renderIdeas() {
+    const grid = document.getElementById('ideasGrid');
+    const list = (activeFilter === 'all' ? ideas : ideas.filter(i=>i.category===activeFilter))
+      .slice().sort((a,b) => netScore(b) - netScore(a));
+
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">◆</div>
+        <div class="empty-text">${activeFilter==='all' ? 'No ideas yet — be the first to suggest a guest!' : 'No ideas in this category yet.'}</div>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map((idea, idx) => {
+      const bg    = catStyle(idea.category);
+      const mine  = myVotes[idea.id];
+      const score = netScore(idea);
+      const scoreClass = score > 0 ? 'positive' : score < 0 ? 'negative' : '';
+      const scoreStr = score > 0 ? '+'+score : String(score);
+      const link = idea.link
+        ? `<a class="idea-link" href="${escHtml(idea.link)}" target="_blank" rel="noopener">↗ ${escHtml(idea.link)}</a>`
+        : '';
+      return `
+      <div class="idea-card" style="animation-delay:${idx*0.05}s">
+        <div class="vote-widget">
+          <button class="vote-up ${mine==='up'?'active':''}" onclick="castVote('${idea.id}','up')" title="Upvote">▲</button>
+          <div class="vote-score ${scoreClass}">${scoreStr}</div>
+          <button class="vote-down ${mine==='down'?'active':''}" onclick="castVote('${idea.id}','down')" title="Downvote">▼</button>
+          <div class="idea-date">${fmtDate(idea.ts)}</div>
+        </div>
+        <div class="idea-body">
+          <div class="idea-name">${escHtml(idea.guestName)}</div>
+          ${idea.guestTitle ? `<div class="idea-title">${escHtml(idea.guestTitle)}</div>` : ''}
+          <div class="idea-tags">
+            <span class="tag" style="background:${bg};color:#e8e4dc">${escHtml(idea.category)}</span>
+          </div>
+          <div class="idea-pitch">${escHtml(idea.pitch)}</div>
+          <div class="recommender-line">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <circle cx="6" cy="4" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M1.5 10.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            Recommended by ${escHtml(idea.submitterName)}
+          </div>
+          ${link}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Vote ──────────────────────────────────────────────────────────
+  function castVote(id, dir) {
+    const idea = ideas.find(i=>i.id===id);
+    if (!idea) return;
+    const prev = myVotes[id];
+
+    // remove previous vote effect
+    if (prev === 'up')   idea.upvotes   = Math.max(0,(idea.upvotes||0)-1);
+    if (prev === 'down') idea.downvotes = Math.max(0,(idea.downvotes||0)-1);
+
+    if (prev === dir) {
+      // toggle off
+      delete myVotes[id];
+      showToast('Vote removed.');
+    } else {
+      // apply new vote
+      if (dir === 'up')   { idea.upvotes   = (idea.upvotes||0)+1; showToast('▲ Upvoted!'); }
+      if (dir === 'down') { idea.downvotes = (idea.downvotes||0)+1; showToast('▼ Downvoted.'); }
+      myVotes[id] = dir;
+    }
+
+    save(); updateStats(); renderIdeas();
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────
+  document.getElementById('ideaForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const rawCat = document.getElementById('category').value;
+    const customCat = document.getElementById('categoryOther').value.trim();
+    const category = rawCat === '✏️ Other' && customCat ? customCat : rawCat;
+    ideas.unshift({
+      id:            crypto.randomUUID(),
+      guestName:     document.getElementById('guestName').value.trim(),
+      guestTitle:    document.getElementById('guestTitle').value.trim(),
+      submitterName: document.getElementById('submitterName').value.trim(),
+      category,
+      link:          document.getElementById('link').value.trim(),
+      pitch:         document.getElementById('pitch').value.trim(),
+      upvotes: 0, downvotes: 0, ts: Date.now(),
+    });
+    save(); e.target.reset();
+    document.getElementById('categoryOther').style.display = 'none';
+    document.getElementById('categoryOther').required = false;
+    buildFilters(); updateStats(); renderIdeas();
+    showToast('◆ Guest idea submitted!');
+    document.getElementById('ideasGrid').scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────
+  buildFilters(); updateStats(); renderIdeas();
+</script>
+</body>
+</html>
