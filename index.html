@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Monday Menlo Meeting — Guest Ideas</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>emailjs.init('NPh4ywAAavRrI_l9B');</script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -574,6 +576,16 @@
     buildFilters(); updateStats(); renderIdeas();
     showToast('◆ Guest idea submitted!');
     document.getElementById('ideasGrid').scrollIntoView({ behavior:'smooth', block:'start' });
+
+    // ── Email notification ─────────────────────────────────────────
+    emailjs.send('service_346ttfc', 'template_os3yrdt', {
+      guest_name:   ideas[0].guestName,
+      guest_title:  ideas[0].guestTitle,
+      profile_type: ideas[0].profileType,
+      recommender:  ideas[0].submitterName,
+      pitch:        ideas[0].pitch,
+      link:         ideas[0].link || 'N/A',
+    }).catch(err => console.warn('EmailJS error:', err));
   });
 
   // ── Init ──────────────────────────────────────────────────────────
