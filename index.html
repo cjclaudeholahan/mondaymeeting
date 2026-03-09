@@ -602,7 +602,10 @@
       recommender:  ideas[0].submitterName,
       pitch:        ideas[0].pitch,
       link:         ideas[0].link || 'N/A',
-    }).catch(err => console.warn('EmailJS error:', err));
+    }).then(
+      res  => console.log('EmailJS success:', res.status, res.text),
+      err  => { console.error('EmailJS error:', err); showToast('⚠ Email failed: ' + (err.text || err)); }
+    );
   });
 
   // ── Init ──────────────────────────────────────────────────────────
