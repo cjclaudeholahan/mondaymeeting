@@ -361,7 +361,7 @@
       </div>
       <div class="stat">
         <div class="stat-num" id="stat-cats">0</div>
-        <div class="stat-label">Categories</div>
+        <div class="stat-label">Profile Types</div>
       </div>
     </div>
   </header>
@@ -386,24 +386,8 @@
           <input type="text" id="submitterName" placeholder="e.g. Alex Johnson" required />
         </div>
         <div class="form-group">
-          <label>Category *</label>
-          <select id="category" required>
-            <option value="">Select a category…</option>
-            <option>🤖 Artificial Intelligence</option>
-            <option>💻 Technology & Software</option>
-            <option>🔬 Deep Tech & R&D</option>
-            <option>📡 Semiconductors & Hardware</option>
-            <option>🔒 Cybersecurity</option>
-            <option>💰 Private Equity & VC</option>
-            <option>📊 Public Markets & Macro</option>
-            <option>🏦 Alternative Investments</option>
-            <option>🌱 Climate Tech</option>
-            <option>🏗️ Real Estate & Infrastructure</option>
-            <option>🌍 Global Markets & Geopolitics</option>
-            <option>🏛️ Policy & Regulation</option>
-            <option>✏️ Other</option>
-          </select>
-          <input type="text" id="categoryOther" placeholder="Specify category…" style="display:none;margin-top:8px" />
+          <label>Profile Type *</label>
+          <input type="text" id="profileType" placeholder="e.g. VC, SW Engineer, Public Market Investor" required />
         </div>
         <div class="form-group">
           <label>Link / Profile</label>
@@ -442,48 +426,11 @@
   let myVotes = JSON.parse(localStorage.getItem(VOTES_KEY) || '{}');
   let activeFilter = 'all';
 
-  // ── Category colours ──────────────────────────────────────────────
-  const catColors = {
-    '🤖 Artificial Intelligence':     ['#1a3a7a','#2d5abf'],
-    '💻 Technology & Software':       ['#1a4a8a','#3370cc'],
-    '🔬 Deep Tech & R&D':             ['#0a4a5e','#0d7a99'],
-    '📡 Semiconductors & Hardware':   ['#003a5e','#006699'],
-    '🔒 Cybersecurity':               ['#3a1a6e','#6633aa'],
-    '💰 Private Equity & VC':         ['#8a6200','#c9a84c'],
-    '📊 Public Markets & Macro':      ['#7a4a00','#b88c30'],
-    '🏦 Alternative Investments':     ['#6a3a00','#a86e20'],
-    '🌱 Climate Tech':                ['#1a4a1a','#2e8b2e'],
-    '🏗️ Real Estate & Infrastructure':['#3a2a0a','#7a5a1a'],
-    '🌍 Global Markets & Geopolitics':['#2a1a5e','#5533aa'],
-    '🏛️ Policy & Regulation':         ['#0d3b5e','#1a6699'],
-  };
-
-  function catStyle(cat) {
-    const [a, b] = catColors[cat] || ['#3d3d66','#6666aa'];
-    return `linear-gradient(135deg,${a},${b})`;
-  }
-
-  // ── Other category toggle ─────────────────────────────────────────
-  document.getElementById('category').addEventListener('change', function() {
-    const otherInput = document.getElementById('categoryOther');
-    if (this.value === '✏️ Other') {
-      otherInput.style.display = 'block';
-      otherInput.required = true;
-    } else {
-      otherInput.style.display = 'none';
-      otherInput.required = false;
-      otherInput.value = '';
-    }
-  });
 
   // ── Helpers ───────────────────────────────────────────────────────
   function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
     localStorage.setItem(VOTES_KEY, JSON.stringify(myVotes));
-  }
-
-  function initials(name) {
-    return name.split(/\s+/).map(w => w[0]?.toUpperCase() || '').join('').slice(0,2) || '?';
   }
 
   function fmtDate(ts) {
@@ -512,17 +459,17 @@
     document.getElementById('stat-total').textContent = ideas.length;
     const net = ideas.reduce((s,i) => s + netScore(i), 0);
     document.getElementById('stat-votes').textContent = net >= 0 ? '+'+net : net;
-    document.getElementById('stat-cats').textContent = new Set(ideas.map(i=>i.category)).size;
+    document.getElementById('stat-cats').textContent = new Set(ideas.map(i=>i.profileType)).size;
   }
 
   // ── Filters ───────────────────────────────────────────────────────
   function buildFilters() {
     const row = document.getElementById('filterRow');
     row.querySelectorAll('[data-filter]:not([data-filter="all"])').forEach(b=>b.remove());
-    [...new Set(ideas.map(i=>i.category))].forEach(cat => {
+    [...new Set(ideas.map(i=>i.profileType))].forEach(pt => {
       const b = document.createElement('button');
-      b.className = 'filter-btn'; b.dataset.filter = cat; b.textContent = cat;
-      b.onclick = () => setFilter(cat, b);
+      b.className = 'filter-btn'; b.dataset.filter = pt; b.textContent = pt;
+      b.onclick = () => setFilter(pt, b);
       row.appendChild(b);
     });
   }
@@ -539,7 +486,7 @@
   // ── Render ────────────────────────────────────────────────────────
   function renderIdeas() {
     const grid = document.getElementById('ideasGrid');
-    const list = (activeFilter === 'all' ? ideas : ideas.filter(i=>i.category===activeFilter))
+    const list = (activeFilter === 'all' ? ideas : ideas.filter(i=>i.profileType===activeFilter))
       .slice().sort((a,b) => netScore(b) - netScore(a));
 
     if (!list.length) {
@@ -551,7 +498,6 @@
     }
 
     grid.innerHTML = list.map((idea, idx) => {
-      const bg    = catStyle(idea.category);
       const mine  = myVotes[idea.id];
       const score = netScore(idea);
       const scoreClass = score > 0 ? 'positive' : score < 0 ? 'negative' : '';
@@ -571,7 +517,7 @@
           <div class="idea-name">${escHtml(idea.guestName)}</div>
           ${idea.guestTitle ? `<div class="idea-title">${escHtml(idea.guestTitle)}</div>` : ''}
           <div class="idea-tags">
-            <span class="tag" style="background:${bg};color:#e8e4dc">${escHtml(idea.category)}</span>
+            <span class="tag" style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold2)">${escHtml(idea.profileType)}</span>
           </div>
           <div class="idea-pitch">${escHtml(idea.pitch)}</div>
           <div class="recommender-line">
@@ -614,22 +560,17 @@
   // ── Submit ────────────────────────────────────────────────────────
   document.getElementById('ideaForm').addEventListener('submit', e => {
     e.preventDefault();
-    const rawCat = document.getElementById('category').value;
-    const customCat = document.getElementById('categoryOther').value.trim();
-    const category = rawCat === '✏️ Other' && customCat ? customCat : rawCat;
     ideas.unshift({
       id:            crypto.randomUUID(),
       guestName:     document.getElementById('guestName').value.trim(),
       guestTitle:    document.getElementById('guestTitle').value.trim(),
       submitterName: document.getElementById('submitterName').value.trim(),
-      category,
+      profileType:   document.getElementById('profileType').value.trim(),
       link:          document.getElementById('link').value.trim(),
       pitch:         document.getElementById('pitch').value.trim(),
       upvotes: 0, downvotes: 0, ts: Date.now(),
     });
     save(); e.target.reset();
-    document.getElementById('categoryOther').style.display = 'none';
-    document.getElementById('categoryOther').required = false;
     buildFilters(); updateStats(); renderIdeas();
     showToast('◆ Guest idea submitted!');
     document.getElementById('ideasGrid').scrollIntoView({ behavior:'smooth', block:'start' });
