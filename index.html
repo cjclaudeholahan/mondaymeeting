@@ -6,6 +6,7 @@
   <title>Monday Menlo Meeting — Guest Ideas</title>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>emailjs.init('NPh4ywAAavRrI_l9B');</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -205,6 +206,7 @@
       box-shadow: 0 8px 28px rgba(201,168,76,0.5);
     }
     .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
     /* ── Toast ── */
     .toast {
@@ -326,6 +328,17 @@
       text-align: center; margin-top: 6px;
     }
 
+    /* ── Loading state ── */
+    .loading-state {
+      text-align: center; padding: 56px 24px; color: var(--muted);
+    }
+    .loading-spinner {
+      width: 32px; height: 32px; border: 3px solid rgba(201,168,76,0.2);
+      border-top-color: var(--gold); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* ── Empty state ── */
     .empty-state {
       text-align: center; padding: 56px 24px; color: var(--muted);
@@ -408,7 +421,7 @@
           <textarea id="pitch" placeholder="What makes this person worth an hour of our Monday morning? What unique perspective do they bring?" required></textarea>
         </div>
       </div>
-      <button type="submit" class="btn-submit">Submit Idea ◆</button>
+      <button type="submit" class="btn-submit" id="submitBtn">Submit Idea ◆</button>
     </form>
   </div>
 
@@ -420,7 +433,12 @@
         <button class="filter-btn active" data-filter="all">All</button>
       </div>
     </div>
-    <div class="ideas-grid" id="ideasGrid"></div>
+    <div class="ideas-grid" id="ideasGrid">
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <div>Loading ideas…</div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -428,18 +446,19 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  // ── Supabase ──────────────────────────────────────────────────────
+  const SUPABASE_URL = 'https://vdinqzvrusjinjitxack.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_-M_q6k0eRxADwPDEyRlJLw_e9TvHef9';
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
   // ── State ──────────────────────────────────────────────────────────
-  const STORAGE_KEY  = 'menlo_ideas_v4';
-  const VOTES_KEY    = 'menlo_votes_v4';
-  let ideas  = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  // votes[id] = 'up' | 'down'
-  let myVotes = JSON.parse(localStorage.getItem(VOTES_KEY) || '{}');
+  const VOTES_KEY = 'menlo_votes_v4';
+  let ideas       = [];
+  let myVotes     = JSON.parse(localStorage.getItem(VOTES_KEY) || '{}');
   let activeFilter = 'all';
 
-
   // ── Helpers ───────────────────────────────────────────────────────
-  function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
+  function saveVotes() {
     localStorage.setItem(VOTES_KEY, JSON.stringify(myVotes));
   }
 
@@ -461,22 +480,38 @@
   }
 
   function netScore(idea) {
-    return (idea.upvotes||0) - (idea.downvotes||0);
+    return (idea.upvotes || 0) - (idea.downvotes || 0);
+  }
+
+  // Map Supabase row → local idea object
+  function rowToIdea(row) {
+    return {
+      id:            row.id,
+      guestName:     row.guest_name,
+      guestTitle:    row.guest_title    || '',
+      submitterName: row.submitter_name,
+      profileType:   row.profile_type,
+      link:          row.link           || '',
+      pitch:         row.pitch,
+      upvotes:       row.upvotes        || 0,
+      downvotes:     row.downvotes      || 0,
+      ts:            new Date(row.created_at).getTime(),
+    };
   }
 
   // ── Stats ─────────────────────────────────────────────────────────
   function updateStats() {
     document.getElementById('stat-total').textContent = ideas.length;
-    const net = ideas.reduce((s,i) => s + netScore(i), 0);
-    document.getElementById('stat-votes').textContent = net >= 0 ? '+'+net : net;
-    document.getElementById('stat-cats').textContent = new Set(ideas.map(i=>i.profileType)).size;
+    const net = ideas.reduce((s, i) => s + netScore(i), 0);
+    document.getElementById('stat-votes').textContent = net >= 0 ? '+' + net : net;
+    document.getElementById('stat-cats').textContent = new Set(ideas.map(i => i.profileType)).size;
   }
 
   // ── Filters ───────────────────────────────────────────────────────
   function buildFilters() {
     const row = document.getElementById('filterRow');
-    row.querySelectorAll('[data-filter]:not([data-filter="all"])').forEach(b=>b.remove());
-    [...new Set(ideas.map(i=>i.profileType))].forEach(pt => {
+    row.querySelectorAll('[data-filter]:not([data-filter="all"])').forEach(b => b.remove());
+    [...new Set(ideas.map(i => i.profileType))].forEach(pt => {
       const b = document.createElement('button');
       b.className = 'filter-btn'; b.dataset.filter = pt; b.textContent = pt;
       b.onclick = () => setFilter(pt, b);
@@ -486,7 +521,7 @@
 
   function setFilter(val, btn) {
     activeFilter = val;
-    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderIdeas();
   }
@@ -496,13 +531,13 @@
   // ── Render ────────────────────────────────────────────────────────
   function renderIdeas() {
     const grid = document.getElementById('ideasGrid');
-    const list = (activeFilter === 'all' ? ideas : ideas.filter(i=>i.profileType===activeFilter))
-      .slice().sort((a,b) => netScore(b) - netScore(a));
+    const list = (activeFilter === 'all' ? ideas : ideas.filter(i => i.profileType === activeFilter))
+      .slice().sort((a, b) => netScore(b) - netScore(a));
 
     if (!list.length) {
       grid.innerHTML = `<div class="empty-state">
         <div class="empty-icon">◆</div>
-        <div class="empty-text">${activeFilter==='all' ? 'No ideas yet — be the first to suggest a guest!' : 'No ideas in this category yet.'}</div>
+        <div class="empty-text">${activeFilter === 'all' ? 'No ideas yet — be the first to suggest a guest!' : 'No ideas in this category yet.'}</div>
       </div>`;
       return;
     }
@@ -511,17 +546,17 @@
       const mine  = myVotes[idea.id];
       const score = netScore(idea);
       const scoreClass = score > 0 ? 'positive' : score < 0 ? 'negative' : '';
-      const scoreStr = score > 0 ? '+'+score : String(score);
+      const scoreStr   = score > 0 ? '+' + score : String(score);
       const link = idea.link
         ? `<a class="idea-link" href="${escHtml(idea.link)}" target="_blank" rel="noopener">↗ ${escHtml(idea.link)}</a>`
         : '';
       return `
-      <div class="idea-card" style="animation-delay:${idx*0.05}s">
+      <div class="idea-card" style="animation-delay:${idx * 0.05}s">
         <button class="delete-btn" onclick="deleteIdea('${idea.id}')" title="Remove">✕</button>
         <div class="vote-widget">
-          <button class="vote-up ${mine==='up'?'active':''}" onclick="castVote('${idea.id}','up')" title="Upvote">▲</button>
+          <button class="vote-up ${mine === 'up' ? 'active' : ''}" onclick="castVote('${idea.id}','up')" title="Upvote">▲</button>
           <div class="vote-score ${scoreClass}">${scoreStr}</div>
-          <button class="vote-down ${mine==='down'?'active':''}" onclick="castVote('${idea.id}','down')" title="Downvote">▼</button>
+          <button class="vote-down ${mine === 'down' ? 'active' : ''}" onclick="castVote('${idea.id}','down')" title="Downvote">▼</button>
           <div class="idea-date">${fmtDate(idea.ts)}</div>
         </div>
         <div class="idea-body">
@@ -544,64 +579,108 @@
     }).join('');
   }
 
+  // ── Load from Supabase ────────────────────────────────────────────
+  async function loadIdeas() {
+    const { data, error } = await db
+      .from('ideas')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Load error:', error);
+      document.getElementById('ideasGrid').innerHTML =
+        `<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-text">Could not load ideas. Check console.</div></div>`;
+      return;
+    }
+
+    ideas = data.map(rowToIdea);
+    buildFilters(); updateStats(); renderIdeas();
+  }
+
+  // ── Realtime — auto-refresh when anyone submits/deletes/votes ─────
+  db.channel('ideas-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'ideas' }, () => {
+      loadIdeas();
+    })
+    .subscribe();
+
   // ── Vote ──────────────────────────────────────────────────────────
-  function castVote(id, dir) {
-    const idea = ideas.find(i=>i.id===id);
+  async function castVote(id, dir) {
+    const idea = ideas.find(i => i.id === id);
     if (!idea) return;
     const prev = myVotes[id];
 
-    // remove previous vote effect
-    if (prev === 'up')   idea.upvotes   = Math.max(0,(idea.upvotes||0)-1);
-    if (prev === 'down') idea.downvotes = Math.max(0,(idea.downvotes||0)-1);
+    let upvotes   = idea.upvotes   || 0;
+    let downvotes = idea.downvotes || 0;
+
+    if (prev === 'up')   upvotes   = Math.max(0, upvotes - 1);
+    if (prev === 'down') downvotes = Math.max(0, downvotes - 1);
 
     if (prev === dir) {
-      // toggle off
       delete myVotes[id];
       showToast('Vote removed.');
     } else {
-      // apply new vote
-      if (dir === 'up')   { idea.upvotes   = (idea.upvotes||0)+1; showToast('▲ Upvoted!'); }
-      if (dir === 'down') { idea.downvotes = (idea.downvotes||0)+1; showToast('▼ Downvoted.'); }
+      if (dir === 'up')   { upvotes++;   showToast('▲ Upvoted!'); }
+      if (dir === 'down') { downvotes++; showToast('▼ Downvoted.'); }
       myVotes[id] = dir;
     }
 
-    save(); updateStats(); renderIdeas();
+    saveVotes();
+
+    // Optimistic UI update
+    idea.upvotes = upvotes; idea.downvotes = downvotes;
+    updateStats(); renderIdeas();
+
+    const { error } = await db.from('ideas').update({ upvotes, downvotes }).eq('id', id);
+    if (error) console.error('Vote error:', error);
   }
 
   // ── Delete ────────────────────────────────────────────────────────
-  function deleteIdea(id) {
-    ideas = ideas.filter(i => i.id !== id);
+  async function deleteIdea(id) {
+    const { error } = await db.from('ideas').delete().eq('id', id);
+    if (error) { console.error('Delete error:', error); showToast('⚠ Failed to delete.'); return; }
     delete myVotes[id];
-    save(); buildFilters(); updateStats(); renderIdeas();
+    saveVotes();
     showToast('Entry removed.');
+    // Realtime subscription will trigger loadIdeas automatically
   }
 
   // ── Submit ────────────────────────────────────────────────────────
-  document.getElementById('ideaForm').addEventListener('submit', e => {
+  document.getElementById('ideaForm').addEventListener('submit', async e => {
     e.preventDefault();
-    ideas.unshift({
-      id:            crypto.randomUUID(),
-      guestName:     document.getElementById('guestName').value.trim(),
-      guestTitle:    document.getElementById('guestTitle').value.trim(),
-      submitterName: document.getElementById('submitterName').value.trim(),
-      profileType:   document.getElementById('profileType').value.trim(),
-      link:          document.getElementById('link').value.trim(),
-      pitch:         document.getElementById('pitch').value.trim(),
-      upvotes: 0, downvotes: 0, ts: Date.now(),
-    });
-    save(); e.target.reset();
-    buildFilters(); updateStats(); renderIdeas();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    const newIdea = {
+      guest_name:     document.getElementById('guestName').value.trim(),
+      guest_title:    document.getElementById('guestTitle').value.trim(),
+      submitter_name: document.getElementById('submitterName').value.trim(),
+      profile_type:   document.getElementById('profileType').value.trim(),
+      link:           document.getElementById('link').value.trim() || null,
+      pitch:          document.getElementById('pitch').value.trim(),
+    };
+
+    const { error } = await db.from('ideas').insert(newIdea);
+    btn.disabled = false; btn.textContent = 'Submit Idea ◆';
+
+    if (error) {
+      console.error('Insert error:', error);
+      showToast('⚠ Failed to submit. Try again.');
+      return;
+    }
+
+    e.target.reset();
     showToast('◆ Guest idea submitted!');
-    document.getElementById('ideasGrid').scrollIntoView({ behavior:'smooth', block:'start' });
+    document.getElementById('ideasGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     // ── Email notification ─────────────────────────────────────────
     emailjs.send('service_u23roa7', 'template_os3yrdt', {
-      guest_name:   ideas[0].guestName,
-      guest_title:  ideas[0].guestTitle,
-      profile_type: ideas[0].profileType,
-      recommender:  ideas[0].submitterName,
-      pitch:        ideas[0].pitch,
-      link:         ideas[0].link || 'N/A',
+      guest_name:   newIdea.guest_name,
+      guest_title:  newIdea.guest_title,
+      profile_type: newIdea.profile_type,
+      recommender:  newIdea.submitter_name,
+      pitch:        newIdea.pitch,
+      link:         newIdea.link || 'N/A',
     }).then(
       res  => console.log('EmailJS success:', res.status, res.text),
       err  => { console.error('EmailJS error:', err); showToast('⚠ Email failed: ' + (err.text || err)); }
@@ -609,7 +688,7 @@
   });
 
   // ── Init ──────────────────────────────────────────────────────────
-  buildFilters(); updateStats(); renderIdeas();
+  loadIdeas();
 </script>
 </body>
 </html>
