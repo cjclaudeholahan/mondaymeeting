@@ -249,7 +249,7 @@
       background: var(--surface); border: 1px solid rgba(201,168,76,0.12);
       border-radius: 16px; padding: 20px 22px;
       display: grid; grid-template-columns: auto 1fr;
-      gap: 16px; align-items: start;
+      gap: 16px; align-items: start; position: relative;
       transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
       animation: slideIn 0.4s ease forwards; opacity: 0;
     }
@@ -281,6 +281,14 @@
       word-break: break-all; display: block; margin-top: 5px;
     }
     .idea-link:hover { text-decoration: underline; }
+
+    .delete-btn {
+      position: absolute; top: 14px; right: 16px;
+      background: none; border: none; cursor: pointer;
+      color: rgba(122,144,172,0.35); font-size: 1rem; line-height: 1;
+      transition: color 0.15s; padding: 2px 4px;
+    }
+    .delete-btn:hover { color: var(--red); }
 
     /* ── Vote widget ── */
     .vote-widget {
@@ -509,6 +517,7 @@
         : '';
       return `
       <div class="idea-card" style="animation-delay:${idx*0.05}s">
+        <button class="delete-btn" onclick="deleteIdea('${idea.id}')" title="Remove">✕</button>
         <div class="vote-widget">
           <button class="vote-up ${mine==='up'?'active':''}" onclick="castVote('${idea.id}','up')" title="Upvote">▲</button>
           <div class="vote-score ${scoreClass}">${scoreStr}</div>
@@ -557,6 +566,14 @@
     }
 
     save(); updateStats(); renderIdeas();
+  }
+
+  // ── Delete ────────────────────────────────────────────────────────
+  function deleteIdea(id) {
+    ideas = ideas.filter(i => i.id !== id);
+    delete myVotes[id];
+    save(); buildFilters(); updateStats(); renderIdeas();
+    showToast('Entry removed.');
   }
 
   // ── Submit ────────────────────────────────────────────────────────
